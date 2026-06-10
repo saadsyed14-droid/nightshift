@@ -198,6 +198,8 @@ function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} }
 /* ============ HELPERS ============ */
 const day=864e5;
 function curWeek(){ const w=Math.floor((Date.now()-START)/(7*day))+1; return Math.max(1,Math.min(17,w)); }
+function planStarted(){ return Date.now() >= START.getTime(); }
+function daysToStart(){ return Math.max(0, Math.ceil((START.getTime()-Date.now())/day)); }
 function viewWeek(){ return S._w || curWeek(); }
 function daysToRace(){ return Math.max(0,Math.floor((RACE-Date.now())/day)); }
 function pad2(n){ return String(n).padStart(2,'0'); }
@@ -257,6 +259,7 @@ function freshColor(v){ return v>=70?'var(--done)' : v>=45?'var(--warn)' : 'var(
 
 function coachToday(){
   const t=todayStr(), w=PLAN[curWeek()-1];
+  if(!planStarted()) return {head:'Plan starts <span class="accent">Monday, Jun 15</span> — '+daysToStart()+' days out.', sub:'These are pre-season days, not missed training. Use them to set up: import your Strava history, mark your June night shifts on the calendar, and get 2–3 easy runs in by feel. No structure required yet.'};
   const yd=ymd(new Date(Date.now()-day));
   const night=S.cal[t]&&S.cal[t].night, postNight=S.cal[yd]&&S.cal[yd].night;
   if(night) return {head:'Night shift today — <span class="accent">rest or a 15-min shakeout.</span>', sub:'Sleep is the training input that matters most. Don\'t run hard on a work night.'};
@@ -299,7 +302,7 @@ function Today(){
   const fbar=(lab,v)=>`<div class="fresh"><div class="flab"><span>${lab}</span><b style="color:${freshColor(v)}">${v}%</b></div><div class="fbar"><div style="width:${v}%;background:${freshColor(v)}"></div></div></div>`;
   return `
   <div class="hero">
-    <div class="eyebrow">Week ${curWeek()} / 17 · ${w.ph}</div>
+    <div class="eyebrow">${planStarted()?('Week '+curWeek()+' / 17 · '+w.ph):('Pre-season · plan begins in '+daysToStart()+' days')}</div>
     <div class="suggest">${c.head}</div>
     <div class="muted small">${c.sub}</div>
     <div class="statgrid">
