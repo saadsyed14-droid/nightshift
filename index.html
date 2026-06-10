@@ -188,11 +188,66 @@ const STRENGTH={
    {n:'Side Plank',s:2,lo:20,hi:45,inc:0,start:0,hold:true,note:'per side',mg:['core']},
  ]},
 };
+/* Swappable exercise library, grouped by category (cat). Equipment: dumbbells + full gym. */
+const LIBRARY=[
+ // push
+ {n:'DB Floor / Bench Press',cat:'push',mg:['push'],s:3,lo:8,hi:12,inc:5,start:35},
+ {n:'Barbell Bench Press',cat:'push',mg:['push'],s:3,lo:5,hi:8,inc:5,start:95},
+ {n:'Incline DB Press',cat:'push',mg:['push'],s:3,lo:8,hi:12,inc:5,start:30},
+ {n:'Machine Chest Press',cat:'push',mg:['push'],s:3,lo:8,hi:12,inc:5,start:50},
+ {n:'DB Overhead Press',cat:'push',mg:['push'],s:3,lo:8,hi:12,inc:5,start:25},
+ {n:'Barbell Overhead Press',cat:'push',mg:['push'],s:3,lo:5,hi:8,inc:5,start:65},
+ {n:'Push-up',cat:'push',mg:['push'],s:3,lo:10,hi:20,inc:0,start:0,note:'bodyweight'},
+ {n:'Dip',cat:'push',mg:['push'],s:3,lo:6,hi:12,inc:0,start:0,note:'bodyweight/assisted'},
+ // pull
+ {n:'One-Arm DB Row',cat:'pull',mg:['pull'],s:3,lo:8,hi:12,inc:5,start:40,note:'per side'},
+ {n:'Barbell Row',cat:'pull',mg:['pull'],s:3,lo:6,hi:10,inc:5,start:75},
+ {n:'Lat Pulldown',cat:'pull',mg:['pull'],s:3,lo:8,hi:12,inc:5,start:80},
+ {n:'Seated Cable Row',cat:'pull',mg:['pull'],s:3,lo:8,hi:12,inc:5,start:80},
+ {n:'Pull-up',cat:'pull',mg:['pull'],s:3,lo:4,hi:10,inc:0,start:0,note:'bodyweight/assisted'},
+ {n:'Face Pull',cat:'pull',mg:['pull'],s:3,lo:12,hi:20,inc:5,start:30},
+ // quads
+ {n:'Goblet Squat (DB)',cat:'quads',mg:['quads','posterior'],s:3,lo:8,hi:12,inc:5,start:35},
+ {n:'Barbell Back Squat',cat:'quads',mg:['quads','posterior'],s:3,lo:5,hi:8,inc:5,start:115},
+ {n:'DB Reverse Lunge',cat:'quads',mg:['quads','posterior'],s:2,lo:10,hi:12,inc:5,start:25,note:'per leg'},
+ {n:'Bulgarian Split Squat',cat:'quads',mg:['quads','posterior'],s:2,lo:8,hi:10,inc:5,start:20,note:'per leg'},
+ {n:'Leg Press',cat:'quads',mg:['quads','posterior'],s:3,lo:8,hi:12,inc:10,start:160},
+ {n:'Walking Lunge',cat:'quads',mg:['quads','posterior'],s:2,lo:10,hi:14,inc:5,start:20,note:'per leg'},
+ {n:'Step-up',cat:'quads',mg:['quads','posterior'],s:2,lo:8,hi:12,inc:5,start:20,note:'per leg'},
+ {n:'Leg Extension',cat:'quads',mg:['quads'],s:3,lo:10,hi:15,inc:5,start:60},
+ // posterior
+ {n:'DB Romanian Deadlift',cat:'posterior',mg:['posterior'],s:3,lo:8,hi:12,inc:5,start:40},
+ {n:'Barbell RDL',cat:'posterior',mg:['posterior'],s:3,lo:6,hi:10,inc:5,start:95},
+ {n:'DB Single-Leg RDL',cat:'posterior',mg:['posterior'],s:3,lo:8,hi:10,inc:5,start:20,note:'per leg'},
+ {n:'Hip Thrust',cat:'posterior',mg:['posterior'],s:3,lo:10,hi:15,inc:10,start:60},
+ {n:'Glute Bridge',cat:'posterior',mg:['posterior'],s:3,lo:10,hi:15,inc:5,start:30},
+ {n:'Leg Curl',cat:'posterior',mg:['posterior'],s:3,lo:8,hi:12,inc:5,start:50},
+ {n:'Back Extension',cat:'posterior',mg:['posterior'],s:3,lo:10,hi:15,inc:0,start:0,note:'+plate optional'},
+ {n:'Kettlebell Swing',cat:'posterior',mg:['posterior'],s:3,lo:10,hi:15,inc:5,start:35},
+ // calves
+ {n:'Standing Calf Raise',cat:'calves',mg:['calves'],s:3,lo:12,hi:20,inc:10,start:45},
+ {n:'Seated Calf Raise',cat:'calves',mg:['calves'],s:3,lo:12,hi:20,inc:5,start:45},
+ {n:'Single-Leg Calf Raise',cat:'calves',mg:['calves'],s:3,lo:10,hi:15,inc:5,start:0,note:'per leg, +DB'},
+ // core
+ {n:'Plank',cat:'core',mg:['core'],s:3,lo:30,hi:60,inc:0,start:0,hold:true},
+ {n:'Side Plank',cat:'core',mg:['core'],s:2,lo:20,hi:45,inc:0,start:0,hold:true,note:'per side'},
+ {n:'Dead Bug',cat:'core',mg:['core'],s:3,lo:8,hi:12,inc:0,start:0,note:'per side'},
+ {n:'Pallof Press',cat:'core',mg:['core'],s:3,lo:10,hi:15,inc:5,start:20,note:'per side'},
+ {n:'Hanging Knee Raise',cat:'core',mg:['core'],s:3,lo:8,hi:15,inc:0,start:0},
+ {n:'Cable Crunch',cat:'core',mg:['core'],s:3,lo:12,hi:20,inc:5,start:50},
+];
+const CATS=['push','pull','quads','posterior','calves','core'];
+function cloneEx(x){ return {n:x.n,s:x.s,lo:x.lo,hi:x.hi,inc:x.inc,start:x.start,mg:(x.mg||['push']).slice(),hold:!!x.hold,note:x.note,cat:x.cat||(x.mg&&x.mg[0])||'push'}; }
+function ensureProgram(){ if(!S.program) S.program={A:STRENGTH.A.ex.map(cloneEx), B:STRENGTH.B.ex.map(cloneEx)}; }
+function progDay(d){ return (S.program&&S.program[d]) || STRENGTH[d].ex; }
+function catOf(ex){ return ex.cat || (ex.mg&&ex.mg[0]) || 'push'; }
+function esc(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
 const LEGS=['quads','posterior','calves'];
 
 /* ============ STATE ============ */
 let S={tab:'today', runLog:{}, strLog:[], cal:{}, weights:[], acts:[], readi:{}, _w:0, strDay:'A'};
-function load(){ try{const r=localStorage.getItem(KEY); if(r) S=Object.assign(S,JSON.parse(r));}catch(e){} if(!S.acts)S.acts=[]; if(!S.readi)S.readi={}; }
+function load(){ try{const r=localStorage.getItem(KEY); if(r) S=Object.assign(S,JSON.parse(r));}catch(e){} if(!S.acts)S.acts=[]; if(!S.readi)S.readi={}; ensureProgram(); }
 function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} }
 
 /* ============ HELPERS ============ */
@@ -215,7 +270,11 @@ function goodWeek(n){ const l=S.runLog[n]||{}; return !!(l.long&&l.long.done) &&
 function weekStreak(){ let s=0; for(let n=curWeek(); n>=1; n--){ if(goodWeek(n)) s++; else if(n<curWeek()) break; } return s; }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
 function fmtDate(s){ const d=new Date(s+'T12:00'); return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
-function findEx(name){ for(const d of ['A','B']){ const e=STRENGTH[d].ex.find(x=>x.n===name); if(e) return e; } return null; }
+function findEx(name){
+  for(const d of ['A','B']){ const arr=(S.program&&S.program[d])||STRENGTH[d].ex; const e=arr.find(x=>x.n===name); if(e) return e; }
+  const lib=LIBRARY.find(x=>x.n===name); if(lib) return lib;
+  return null;
+}
 
 /* ============ FATIGUE / LOAD MODEL ============
    Heuristic, not a sensor: each session deposits "load" on the muscle groups it
@@ -451,23 +510,27 @@ function Lifts(){
   const fA=Math.round((freshness('quads')+freshness('push'))/2), fB=Math.round((freshness('posterior')+freshness('pull'))/2);
   if(!S._dayPicked){ const last=S.strLog[S.strLog.length-1]; let d = last? (last.day==='A'?'B':'A') : 'A'; if(fA-fB>15)d='A'; else if(fB-fA>15)d='B'; S.strDay=d; }
   const legs=freshness('legs');
-  const day=STRENGTH[S.strDay];
+  const dayDef=STRENGTH[S.strDay];
+  const exList=progDay(S.strDay);
   let exs='';
-  day.ex.forEach((ex,ei)=>{
+  exList.forEach((ex,ei)=>{
     const sug=suggestFor(ex);
     const loaded = ex.mg.some(g=>LEGS.includes(g)) && legs<45;
     let setInputs='';
     for(let i=0;i<ex.s;i++) setInputs+=`<input type="number" inputmode="numeric" placeholder="${sug.reps}" id="rep_${ei}_${i}">`;
     exs+=`<div class="ex" ${loaded?'style="opacity:.6"':''}>
-      <div class="row"><h3>${ex.n}</h3><span class="muted small">${loaded?'⚠ legs loaded':(ex.note||'')}</span></div>
+      <div class="row"><h3>${ex.n}</h3><span class="small">${loaded?'<span style="color:var(--bad)">⚠ legs</span> ':''}<a class="link" onclick="openSwap('${S.strDay}',${ei})">swap ⇄</a></span></div>
+      ${ex.note?`<div class="muted small" style="margin:-2px 0 6px">${ex.note}</div>`:''}
       <div class="target">target ${sug.wt}${ex.hold?'s':' lb'} × ${ex.s} × ${ex.lo}-${ex.hi}${ex.hold?'s':''}</div>
       <div class="setlab">${ex.hold?'hold (sec) per set':'weight + reps per set'}</div>
       <div class="sets">${ex.hold?'':`<input class="wt" type="number" inputmode="decimal" placeholder="${sug.wt}" id="wt_${ei}">`}${setInputs}</div>
       <div class="lastnote">${sug.note}</div>
     </div>`;
+    if(S._swapAt && S._swapAt.day===S.strDay && S._swapAt.idx===ei) exs+=pickerHTML(S.strDay,ei);
   });
   const taper = w.ph==='PEAK'||w.ph==='TAPER';
   const legWarn = legs<45 ? '<div class="card" style="border-color:rgba(255,107,107,.4)"><div class="small"><b style="color:var(--bad)">Legs at '+legs+'% fresh.</b> Heavy lower-body work today competes with your running. Lighten the leg lifts (greyed below), do upper/core, or rest.</div></div>' : '';
+  const addPicker = (S._swapAt && S._swapAt.day===S.strDay && S._swapAt.idx===-1) ? pickerHTML(S.strDay,-1) : '';
   return `
   <div class="card" style="padding:12px 14px"><div class="small muted">Freshness — <b style="color:${freshColor(fA)}">Day A ${fA}%</b> · <b style="color:${freshColor(fB)}">Day B ${fB}%</b>. App pre-picks the fresher day.</div></div>
   ${legWarn}
@@ -477,9 +540,14 @@ function Lifts(){
   </div>
   ${taper?'<div class="card" style="border-color:rgba(255,138,61,.3)"><div class="muted small">⚠ '+w.ph+' phase — drop to <b style="color:var(--text)">1× / week</b>, moderate weights, no grinding. Strength now just maintains; your legs belong to the long runs.</div></div>':''}
   <div class="card">
-    <div class="sec-title">${day.name} · double progression</div>
-    <p class="muted small" style="margin-top:-4px;margin-bottom:13px">Hit the <b>top</b> of the rep range on every set → the app bumps your weight next time. Fall short → repeat. Log what you actually did.</p>
+    <div class="sec-title">${dayDef.name} · double progression</div>
+    <p class="muted small" style="margin-top:-4px;margin-bottom:13px">Tap <b>swap ⇄</b> on any lift to change it. Hit the <b>top</b> of the rep range on every set → the app bumps your weight next time.</p>
     ${exs}
+    ${addPicker}
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn sec" onclick="openSwap('${S.strDay}',-1)">+ Add exercise</button>
+      <button class="btn sec" onclick="resetDay('${S.strDay}')">Reset day to default</button>
+    </div>
     <button class="btn full" onclick="saveLift()">Save workout</button>
   </div>
   <div class="card">
@@ -487,10 +555,41 @@ function Lifts(){
     ${S.strLog.length? S.strLog.slice(-8).reverse().map(s=>`<div class="hist"><b>${fmtDate(s.date)} · Day ${s.day}</b> — ${(s.items||[]).map(it=>it.n.split(' ')[0]+' '+it.wt+(it.hold?'s':'')+'×'+it.reps.join('/')).join(' · ')}</div>`).join('') : '<div class="muted small">No lifts logged yet. Your first session sets your baseline weights.</div>'}
   </div>`;
 }
-function pickDay(d){ S.strDay=d; S._dayPicked=true; render(); }
+function pickerHTML(day,idx){
+  const adding = idx<0;
+  const ex = adding?null:progDay(day)[idx];
+  const cat = adding?null:catOf(ex);
+  const items = adding?LIBRARY:LIBRARY.filter(x=>x.cat===cat);
+  let h='<div class="card" style="border-color:var(--cool)"><div class="sec-title" style="color:var(--cool)">'+(adding?'Add an exercise':'Swap “'+ex.n+'”')+'</div>';
+  CATS.forEach(c=>{ const list=items.filter(x=>x.cat===c); if(!list.length) return;
+    if(adding) h+='<div class="muted small" style="margin:8px 0 4px;text-transform:capitalize;letter-spacing:.04em">'+c+'</div>';
+    list.forEach(x=>{ const fn = adding?`addEx('${day}','${esc(x.n)}')`:`doSwap('${day}',${idx},'${esc(x.n)}')`;
+      h+=`<button class="btn sec" style="display:block;width:100%;text-align:left;margin-bottom:6px;font-weight:600" onclick="${fn}">${x.n}${x.note?` <span class="muted">· ${x.note}</span>`:''}</button>`; });
+  });
+  h+='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">';
+  if(!adding) h+=`<button class="btn sec" onclick="removeEx('${day}',${idx})" style="color:var(--bad)">Remove</button>`;
+  h+=`<button class="btn sec" onclick="addCustom('${day}',${adding?-1:idx})">Custom…</button>`;
+  h+=`<button class="btn sec" onclick="S._swapAt=null;render()">Cancel</button></div></div>`;
+  return h;
+}
+function pickDay(d){ S.strDay=d; S._dayPicked=true; S._swapAt=null; render(); }
+function openSwap(day,idx){ ensureProgram(); S.strDay=day; S._dayPicked=true; S._swapAt={day,idx}; render(); }
+function doSwap(day,idx,name){ ensureProgram(); const lib=LIBRARY.find(x=>x.n===name); if(lib) S.program[day][idx]=cloneEx(lib); S._swapAt=null; save(); toast('Swapped in '+name); render(); }
+function addEx(day,name){ ensureProgram(); const lib=LIBRARY.find(x=>x.n===name); if(lib) S.program[day].push(cloneEx(lib)); S._swapAt=null; save(); toast('Added '+name); render(); }
+function removeEx(day,idx){ ensureProgram(); S.program[day].splice(idx,1); S._swapAt=null; save(); render(); }
+function resetDay(day){ if(confirm('Reset Day '+day+' to its original exercises? Your logged history is kept.')){ ensureProgram(); S.program[day]=STRENGTH[day].ex.map(cloneEx); S._swapAt=null; save(); render(); } }
+function addCustom(day,idx){
+  const name=prompt('Custom exercise name:'); if(!name||!name.trim()) return;
+  const catIn=(prompt('Muscle group — type one: push, pull, quads, posterior, calves, core','push')||'').trim();
+  const cat=CATS.includes(catIn)?catIn:'push';
+  const ex=cloneEx({n:name.trim(),cat,mg:[cat],s:3,lo:8,hi:12,inc:5,start:0});
+  ensureProgram();
+  if(idx>=0) S.program[day][idx]=ex; else S.program[day].push(ex);
+  S._swapAt=null; save(); toast('Added '+name.trim()); render();
+}
 function saveLift(){
-  const day=STRENGTH[S.strDay], items=[];
-  day.ex.forEach((ex,ei)=>{
+  const exList=progDay(S.strDay), items=[];
+  exList.forEach((ex,ei)=>{
     const reps=[]; for(let i=0;i<ex.s;i++){ const el=document.getElementById('rep_'+ei+'_'+i); const v=el&&el.value?parseInt(el.value):null; if(v) reps.push(v); }
     let wt = ex.hold?0:(()=>{const el=document.getElementById('wt_'+ei); return el&&el.value?parseFloat(el.value):suggestFor(ex).wt;})();
     if(reps.length) items.push({n:ex.n, wt, reps, hold:!!ex.hold});
